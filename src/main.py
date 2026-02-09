@@ -1,34 +1,23 @@
-"""Main application entry point."""
+from fastapi import FastAPI
+from src.database import engine, Base, settings
 
-import logging
-import sys
-from pathlib import Path
+# IMPORTANT: import models so Base knows tables
+from src.models import Hub, Route, RouteHub, Booking  # noqa: F401
 
-# Add src to path for development
-sys.path.append(str(Path(__file__).parent.parent))
+from src.routers import hubs_router, routes_router, bookings_router
+from src.routers.route_hubs import router as route_hubs_router  # ✅ add this
 
-from src.config.settings import settings
-from src.utils.logger import setup_logging
+src = FastAPI(title="Logistics Data Platform")
 
-# Setup logging
-setup_logging()
-logger = logging.getLogger(__name__)
+# Create tables ONLY for local testing
+if settings.AUTO_CREATE_TABLES:
+    Base.metadata.create_all(bind=engine)
 
+src.include_router(hubs_router)
+src.include_router(routes_router)
+src.include_router(bookings_router)
+src.include_router(route_hubs_router)  
 
-def main():
-    """Main application function."""
-    logger.info(f"Starting {settings.APP_NAME} v{settings.VERSION}")
-    logger.info(f"Environment: {settings.APP_ENV}")
-    
-    # Your application logic here
-    print(f"🚀 {settings.APP_NAME} is running!")
-    print(f"Environment: {settings.APP_ENV}")
-    print(f"Debug mode: {settings.DEBUG}")
-    
-    # Example: Start web server if this is a web application
-    if hasattr(settings, 'PORT'):
-        print(f"Server would start on port {settings.PORT}")
-
-
-if __name__ == "__main__":
-    main()
+@src.get("/")
+def root():
+    return {"message": "FastAPI is running"}
