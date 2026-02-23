@@ -1,62 +1,40 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.database import get_db
-from app.schemas.vendor import VendorCreate, VendorUpdate, VendorResponse
-from app.crud.vendor import (
-    get_vendors,
-    get_vendor_by_id,
+from src.database import get_db
+from src.schemas.vendor import VendorCreate, VendorUpdate, VendorResponse
+from src.crud.vendor import (
     create_vendor,
+    get_vendors,
+    get_vendor,
     update_vendor,
-    deactivate_vendor
+    delete_vendor
 )
 
-router = APIRouter(
-    prefix="/vendors",
-    tags=["Vendors"]
-)
-
-# -----------------------------
-# GET – All vendors
-# -----------------------------
-@router.get("/", response_model=List[VendorResponse])
-def read_vendors(db: Session = Depends(get_db)):
-    return get_vendors(db)
+router = APIRouter(prefix="/vendors", tags=["Vendors"])
 
 
-# -----------------------------
-# POST – Create vendor
-# -----------------------------
-@router.post("/", response_model=VendorResponse, status_code=status.HTTP_201_CREATED)
-def create(vendor: VendorCreate, db: Session = Depends(get_db)):
+@router.post("/", response_model=VendorResponse)
+def create_vendor_endpoint(vendor: VendorCreate, db: Session = Depends(get_db)):
     return create_vendor(db, vendor)
 
 
-# -----------------------------
-# PUT – Update vendor
-# -----------------------------
+@router.get("/", response_model=List[VendorResponse])
+def list_vendors(db: Session = Depends(get_db)):
+    return get_vendors(db)
+
+
+@router.get("/{vendor_id}", response_model=VendorResponse)
+def get_vendor_endpoint(vendor_id: int, db: Session = Depends(get_db)):
+    return get_vendor(db, vendor_id)
+
+
 @router.put("/{vendor_id}", response_model=VendorResponse)
-def update(
-    vendor_id: int,
-    vendor_update: VendorUpdate,
-    db: Session = Depends(get_db)
-):
-    db_vendor = get_vendor_by_id(db, vendor_id)
-    if not db_vendor:
-        raise HTTPException(status_code=404, detail="Vendor not found")
-
-    return update_vendor(db, db_vendor, vendor_update)
+def update_vendor_endpoint(vendor_id: int, vendor: VendorUpdate, db: Session = Depends(get_db)):
+    return update_vendor(db, vendor_id, vendor)
 
 
-# -----------------------------
-# DELETE – Soft delete vendor
-# -----------------------------
 @router.delete("/{vendor_id}")
-def delete(vendor_id: int, db: Session = Depends(get_db)):
-    db_vendor = get_vendor_by_id(db, vendor_id)
-    if not db_vendor:
-        raise HTTPException(status_code=404, detail="Vendor not found")
-
-    deactivate_vendor(db, db_vendor)
-    return {"message": "Vendor deactivated successfully"}
+def delete_vendor_endpoint(vendor_id: int, db: Session = Depends(get_db)):
+    return delete_vendor(db, vendor_id)

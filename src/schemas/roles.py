@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Dict
+from typing import Optional, List, Dict, Union
 from datetime import datetime
 
 
@@ -10,7 +10,7 @@ class RoleBase(BaseModel):
     role_name: str
     role_code: str
     description: Optional[str] = None
-    permissions: Optional[Dict[str, bool]] = None
+    permissions: Optional[Union[List[str], Dict[str, bool]]] = None
     is_system_role: bool = False
 
 
@@ -28,27 +28,17 @@ class RoleUpdate(BaseModel):
     role_name: Optional[str] = None
     role_code: Optional[str] = None
     description: Optional[str] = None
-    permissions: Optional[Dict[str, bool]] = None
+    permissions: Optional[Union[List[str], Dict[str, bool]]] = None
     is_system_role: Optional[bool] = None
 
 
 # -------------------------
 # Response
 # -------------------------
-from pydantic import BaseModel
-from typing import Optional, Any
-from datetime import datetime
-
-class RoleResponse(BaseModel):
+class RoleResponse(RoleBase):
     id: int
-    role_name: str
-    role_code: str
-    description: Optional[str]
-    permissions: Optional[Any]   
-    is_system_role: bool
-    created_ts: datetime
-    updated_ts: datetime
+    created_ts: Optional[datetime] = None
+    updated_ts: Optional[datetime] = None
 
     class Config:
         from_attributes = True
-

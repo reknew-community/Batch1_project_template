@@ -1,78 +1,60 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-
-from app.database import get_db
-from app.schemas.roles import RoleCreate, RoleUpdate, RoleResponse
-from app.crud.roles import (
-    get_roles,
-    get_role_by_id,
-    create_role,
-    update_role,
-    deactivate_role
-)
+from datetime import datetime
+from src.database import get_db
+from src.models.roles import Role
+from src.schemas.roles import RoleCreate, RoleUpdate, RoleResponse
 
 router = APIRouter(
     prefix="/roles",
     tags=["Roles"]
 )
 
-# -----------------------------
-# GET – All roles
-# -----------------------------
+# Create
+@router.post("/", response_model=RoleResponse)
+def create_role(role: RoleCreate, db: Session = Depends(get_db)):
+    existing_role = db.query(Role).filter(Role.role_code == role.role_code).first()
+    if existing_role:
+        raise HTTPException(status_code=400, detail="Role code already exists")
+    db_role = Role(**role.dict())
+    db.add(db_role)
+    db.commit()
+    db.refresh(db_role)
+    return db_role
+
+# Read all
 @router.get("/", response_model=List[RoleResponse])
-def read_roles(db: Session = Depends(get_db)):
-    return get_roles(db)
+def get_roles(db: Session = Depends(get_db)):
+    return db.query(Role).all()
 
-
-# -----------------------------
-# POST – Create role
-# -----------------------------
-@router.post(
-    "/",
-    response_model=RoleResponse,
-    status_code=status.HTTP_201_CREATED
-)
-def create(role: RoleCreate, db: Session = Depends(get_db)):
-    return create_role(db, role)
-
-
-# -----------------------------
-# GET – Single role
-# -----------------------------
+# Read one
 @router.get("/{role_id}", response_model=RoleResponse)
-def read_role(role_id: int, db: Session = Depends(get_db)):
-    role = get_role_by_id(db, role_id)
+def get_role(role_id: int, db: Session = Depends(get_db)):
+    role = db.query(Role).get(role_id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
     return role
 
-
-# -----------------------------
-# PUT – Update role
-# -----------------------------
+# Update
 @router.put("/{role_id}", response_model=RoleResponse)
-def update(
-    role_id: int,
-    role_update: RoleUpdate,
-    db: Session = Depends(get_db)
-):
-    role = get_role_by_id(db, role_id)
+def update_role(role_id: int, role_update: RoleUpdate, db: Session = Depends(get_db)):
+    role = db.query(Role).get(role_id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
+    for key, value in role_update.dict(exclude_unset=True).items():
+        setattr(role, key, value)
+    role.updated_ts = datetime.utcnow()
+    db.commit()
+    db.refresh(role)
+    return role
 
-    return update_role(db, role, role_update)
-
-
-# -----------------------------
-# DELETE – Delete role
-# -----------------------------
-
+# Delete
 @router.delete("/{role_id}")
 def delete_role(role_id: int, db: Session = Depends(get_db)):
-    db_role = get_role_by_id(db, role_id)
-    if not db_role:
+    role = db.query(Role).get(role_id)
+    if not role:
         raise HTTPException(status_code=404, detail="Role not found")
-
-    deactivate_role(db, db_role)
-    return {"message": "Role deactivated successfully"}
+    db.delete(role)
+    db.commit()
+    return {"detail": "Role deleted successfully"}
