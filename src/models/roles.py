@@ -11,5 +11,5 @@ class Role(Base):
     description = Column(String(255))
     is_system_role = Column(Boolean, default=False)
 
-    # Relationship with User
-    users = relationship("User", back_populates="role")
+    # # Relationship with User
+    # users = relationship("User", back_populates="role")

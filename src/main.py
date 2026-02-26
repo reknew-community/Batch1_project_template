@@ -1,21 +1,17 @@
 from fastapi import FastAPI
 from src.database import engine, Base, settings
 
-# Import existing logistics models
-from src.models import Hub, Route, RouteHub, Booking  
-
-# Import new management models
+# Import existing models
+from src.models import Hub, Route, Booking  
 from src.models import roles, user, customer, vendor  
 
 # Import existing routers
 from src.routers import hubs_router, routes_router, bookings_router
-from src.routers.route_hubs import router as route_hubs_router
-
-# Import new routers
 from src.routers import user, vendor, roles, customer
-
 from src.routers.awbs import router as awbs_router
 from src.routers.shipments import router as shipments_router
+from src.routers.trip import router as trips_router
+from src.routers.vendor_performance import router as vendor_performance_router
 
 
 # Initialize FastAPI app
@@ -29,15 +25,14 @@ if settings.AUTO_CREATE_TABLES:
 app.include_router(hubs_router)
 app.include_router(routes_router)
 app.include_router(bookings_router)
-app.include_router(route_hubs_router)
-
-# New management routers
 app.include_router(roles.router)
 app.include_router(user.router)
 app.include_router(customer.router)
 app.include_router(vendor.router)
 app.include_router(awbs_router) 
 app.include_router(shipments_router)
+app.include_router(trips_router)
+app.include_router(vendor_performance_router)
 
 
 # Root endpoint
