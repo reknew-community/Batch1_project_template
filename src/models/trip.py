@@ -1,8 +1,11 @@
 from sqlalchemy import (
     Column, BigInteger, String, Integer, Boolean,
-    DECIMAL, TIMESTAMP, ForeignKey
+    DECIMAL, DateTime, ForeignKey
 )
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from src.database import Base
+
 
 class TripDB(Base):
     __tablename__ = "trips"
@@ -10,7 +13,7 @@ class TripDB(Base):
     id = Column(BigInteger, primary_key=True, index=True)
     trip_code = Column(String(50), unique=True, nullable=False)
 
-    vendor_id = Column(BigInteger, ForeignKey("vendors.id"), nullable=False)  # FK exists in DB
+    vendor_id = Column(BigInteger, ForeignKey("vendors.id"), nullable=False)
 
     vehicle_number = Column(String(50))
     driver_name = Column(String(150))
@@ -20,10 +23,10 @@ class TripDB(Base):
     destination_city = Column(String(100), nullable=False)
     distance_km = Column(DECIMAL(10, 2))
 
-    scheduled_departure = Column(TIMESTAMP, nullable=False)
-    actual_departure = Column(TIMESTAMP, nullable=True)
-    scheduled_arrival = Column(TIMESTAMP, nullable=False)
-    actual_arrival = Column(TIMESTAMP, nullable=True)
+    scheduled_departure = Column(DateTime, nullable=False)
+    actual_departure = Column(DateTime, nullable=True)
+    scheduled_arrival = Column(DateTime, nullable=False)
+    actual_arrival = Column(DateTime, nullable=True)
 
     vehicle_capacity_kg = Column(DECIMAL(10, 2))
     actual_load_kg = Column(DECIMAL(10, 2))
@@ -38,6 +41,7 @@ class TripDB(Base):
     has_exception = Column(Boolean, default=False)
     exception_type = Column(String(100))
 
-    # Your DB often stores these as VARCHAR(50). Keep as string to match.
-    created_ts = Column(String(50), nullable=False)
-    updated_ts = Column(String(50), nullable=False)
+    created_ts = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_ts = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    vendor = relationship("Vendor", back_populates="trips")
