@@ -1,4 +1,5 @@
 from sqlalchemy import Column, BigInteger, String, Boolean, Text
+from sqlalchemy.orm import relationship
 from src.database import Base
 
 class Customer(Base):
@@ -23,6 +24,8 @@ class Customer(Base):
 
     created_ts = Column(String(50), nullable=False)
     updated_ts = Column(String(50), nullable=False)
+
+    bookings = relationship("Booking", back_populates="customer")
     
 # from sqlalchemy import Column, Integer, String, ForeignKey
 # from sqlalchemy.orm import relationship

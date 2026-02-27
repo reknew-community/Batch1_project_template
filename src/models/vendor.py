@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Boolean, DateTime, BigInteger, DECIMAL, Integer
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from src.database import Base
 
 
@@ -21,7 +22,11 @@ class Vendor(Base):
     available_capacity = Column(Integer)
     service_areas = Column(String(50))
     is_active = Column(Boolean, default=True)
-    created_ts = Column(DateTime, server_default=func.now())
-    updated_ts = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    created_ts = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_ts = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
     address = Column(String(255))
     country = Column(String(100))
+
+    trips = relationship("TripDB", back_populates="vendor")
